@@ -5,12 +5,14 @@ include Irvine32.inc
 
 ;Snake is now continuous instead of being a set of disjointed segments
 ;Game Menu needs to be implemented
+;Variable Length Increment Added
 
 .data
 
     cursorInfo CONSOLE_CURSOR_INFO <>
 
-    ground byte "-----------------------------------------------------------------------------------------------------------------------------------------------",0
+    ; ground byte "-----------------------------------------------------------------------------------------------------------------------------------------------",0
+    ground byte "----------------------------------------------------------------------",0
     brick byte '|'
 
     temp byte ?
@@ -31,7 +33,12 @@ include Irvine32.inc
     character byte 219
     snakeLength byte 6
 
-    xBoundary byte 142
+    foodXBoundary byte 35
+    foodYBoundary byte 28
+    lengthIncrement byte 2
+    scoreIncrement byte 1
+
+    xBoundary byte 70
     yBoundary byte 28
 
     direction byte 1 ; 0=up,1=right,2=down,3=left
@@ -247,24 +254,27 @@ EatingCheck proc
     ; Increment score
 
     mov al, snakeLength
-    inc al
+    add al, lengthIncrement
     mov snakeLength, al
 
     mov al, score
-    inc al
+    add al, scoreIncrement
     mov score, al
     
     ; New random X (1 to 76)
+
     RandomizeFood:
-    mov eax, 65
+    movzx eax, foodXBoundary
+    sub eax, 2
     call RandomRange
-    inc eax ; Range : 1 - 76
+    inc eax
     shl eax, 1 ; Ensure food appears on even X coordinate (since snake moves in steps of 2)
     mov foodX, al        ; al = low byte of eax, fine here
-    ; New random Y (1 to 26)
-    mov eax, 26
+    ; New random Y (2 to 2)
+    movzx eax, foodYBoundary
+    sub eax, 2
     call RandomRange
-    add eax,2
+    add eax, 2 ; Ensure food appears within boundaries (2 to 27)
     mov foodY, al        ; same here
     
     movzx ecx, snakeLength
