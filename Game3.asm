@@ -1,3 +1,4 @@
+.386  ; Enables extended jump ranges
 Title Snake Game (main.asm)
 include Irvine32.inc
 
@@ -14,6 +15,10 @@ include Irvine32.inc
     ; ground byte "-----------------------------------------------------------------------------------------------------------------------------------------------",0
     ground byte "----------------------------------------------------------------------",0
     brick byte '|'
+
+    colorByte byte 1 ; 1=green,2=red,3=yellow,4=blue,5=magenta,6=cyan
+    
+    isStriped byte 0;
 
     temp byte ?
 
@@ -61,6 +66,8 @@ main proc
     call DrawFood
     gameLoop:    
         ; Get input and move based on direction
+        ; mov eax, (black*16) + white
+        ; call setTextColor
         call GetInput
         call BoundaryCollisionCheck
         call SelfCollisionCheck
@@ -161,6 +168,8 @@ RemoveSnake proc
 RemoveSnake endp
 
 DrawScore proc
+    mov eax, (black*16) + blue
+    call setTextColor
     mov dl, 0
     mov dh, 0
     call gotoxy
@@ -168,6 +177,8 @@ DrawScore proc
     call WriteString
     movzx eax, score    ; Zero-extend score to 32-bit (fixes display issue)
     call WriteDec
+    mov eax, (black*16) + white
+    call setTextColor
     ret
 DrawScore endp
 
@@ -227,11 +238,15 @@ GetInput endp
 
 
 DrawFood proc
+    mov eax, (black*16) + green
+    call setTextColor
     mov dl, foodX
     mov dh, foodY
     call gotoxy
     mov al, '*'
     call WriteChar
+    mov eax, (black*16) + white
+    call setTextColor
     ret
 DrawFood endp
 
@@ -326,25 +341,35 @@ HideCursor endp
 
 
 DrawGround proc
+    mov eax, (black*16) + red
+    call setTextColor
     mov dl, 0
     mov dh, 28
     call gotoxy
     mov edx, offset ground
     call WriteString
+    mov eax, (black*16) + white
+    call setTextColor
     ret
 DrawGround endp
 
 DrawCeiling proc
+    mov eax, (black*16) + red
+    call setTextColor
     mov dl, 0
     mov dh, 1
     call gotoxy
     mov edx, offset ground
     call WriteString
+    mov eax, (black*16) + white
+    call setTextColor
     ret
 DrawCeiling endp
 
 DrawWalls proc
     ; Draw left wall
+    mov eax, (black*16) + red
+    call setTextColor
     mov ecx, 0
     mov cl, 27 ; Number of rows for walls
     LeftWallLoop:
@@ -368,7 +393,8 @@ DrawWalls proc
         mov al, brick
         call WriteChar
         loop RightWallLoop
-    
+    mov eax, (black*16) + white
+    call setTextColor
     ret
 DrawWalls endp
 
@@ -413,19 +439,86 @@ InitializeSnake proc
 InitializeSnake endp
 
 DrawSnake proc
+
+    ; mov al, isStriped
+    ; cmp al, 0
+    ; jne StripedSnake
+    call DrawPlainSnake
+    ret
+    
+
+
+    ; StripedSnake:
+    ; call DrawGaySnake
+    ; ret
+DrawSnake endp
+
+DrawGaySnake proc
+;   ; Placeholder for future pride snake implementation
+    ; Could cycle through colors for each segment or use a pattern
+    ret
+DrawGaySnake endp
+
+DrawPlainSnake proc
     movzx ecx, snakeLength
     mov esi, 0
+    cmp colorByte, 1
+    je SetGreen
+    cmp colorByte, 2
+    je SetRed
+    cmp colorByte, 3
+    je SetYellow
+    cmp colorByte, 4
+    je SetBlue
+    cmp colorByte, 5
+    je SetMagenta
+    cmp colorByte, 6
+    je SetCyan
+    mov eax, (black*16) + white
+    call SetTextColor
+    mov colorByte, 1
     DrawLoop:
     mov dl, snakeX[esi]
     mov dh, snakeY[esi]
     call gotoxy
     mov al, character
     call WriteChar
-    ; call WriteChar
     inc esi
     loop DrawLoop
+    mov eax, (black*16) + white
+    call SetTextColor
     ret
-DrawSnake endp
+
+    SetGreen:
+    mov eax, (black*16) + green
+    call setTextColor
+    jmp DrawLoop
+
+    SetRed:
+    mov eax, (black*16) + red
+    call setTextColor
+    jmp DrawLoop
+
+    SetYellow:
+    mov eax, (black*16) + yellow
+    call setTextColor
+    jmp DrawLoop
+
+    SetBlue:
+    mov eax, (black*16) + blue
+    call setTextColor
+    jmp DrawLoop
+
+    SetMagenta:
+    mov eax, (black*16) + magenta
+    call setTextColor
+    jmp DrawLoop
+
+    SetCyan:
+    mov eax, (black*16) + cyan
+    call setTextColor
+    jmp DrawLoop
+DrawPlainSnake endp
 
 ShiftBody proc
     movzx ecx, snakeLength
